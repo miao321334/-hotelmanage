@@ -16,7 +16,7 @@ export class UpdateHotelDto {
   })
   @IsString()
   @IsNotEmpty()
-  nameZh: string;
+  nameZh!: string;
 
   @ApiProperty({
     description: '酒店英文名',
@@ -25,7 +25,7 @@ export class UpdateHotelDto {
   })
   @IsString()
   @IsNotEmpty()
-  nameEn: string;
+  nameEn!: string;
 
   @ApiProperty({
     description: '酒店地址',
@@ -34,7 +34,7 @@ export class UpdateHotelDto {
   })
   @IsString()
   @IsNotEmpty()
-  address: string;
+  address!: string;
 
   @ApiProperty({
     description: '酒店星级',
@@ -45,7 +45,7 @@ export class UpdateHotelDto {
   })
   @IsNumber()
   @IsNotEmpty()
-  starRating: number;
+  starRating!: number;
 
   @ApiProperty({
     description: '酒店开业时间',
@@ -55,7 +55,7 @@ export class UpdateHotelDto {
   })
   @IsString()
   @IsNotEmpty()
-  openingDate: string;
+  openingDate!: string;
 
   @ApiProperty({
     description: '酒店描述',

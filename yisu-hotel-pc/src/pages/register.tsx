@@ -7,7 +7,7 @@ import {
   Form, Input, Button, Card, Typography,
   Layout, Alert, Space, Radio
 } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, UsergroupAddOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Content } = Layout;
@@ -121,7 +121,7 @@ export default function Register() {
               label="身份类型"
             >
               <Radio.Group buttonStyle="solid">
-                <Radio.Button value="merchant" icon={<UsergroupAddOutlined />}>
+                <Radio.Button value="merchant">
                   商户
                 </Radio.Button>
                 <Radio.Button value="admin">

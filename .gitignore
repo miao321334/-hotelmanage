@@ -1,6 +1,7 @@
 backend/node_modules
 backend/dist
-backend/.env# Nestjs specific
+backend/.env
+# Nestjs specific
 /dist
 /node_modules
 /build
@@ -24,3 +25,13 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+# IDE / tools
+.qwen/
+
+# Uploaded files
+backend/uploads/
+uploads/
+
+# Database data
+postgres-data/

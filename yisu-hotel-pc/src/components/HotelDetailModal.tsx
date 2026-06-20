@@ -51,7 +51,6 @@ export default function HotelDetailModal({ hotelId, open, onClose }: Props) {
       onCancel={onClose}
       footer={null}
       width={1000}
-      destroyOnClose
     >
       {loading ? (
         <Spin size="large" style={{ display: 'block', margin: '50px auto' }} />
@@ -65,13 +64,25 @@ export default function HotelDetailModal({ hotelId, open, onClose }: Props) {
             <Descriptions.Item label="星级">{hotel.starRating} 星</Descriptions.Item>
             <Descriptions.Item label="开业时间">{new Date(hotel.openingDate).toLocaleDateString()}</Descriptions.Item>
             <Descriptions.Item label="状态">
-              <Tag color={
-                hotel.status === 'approved' ? 'success' :
-                  hotel.status === 'pending' ? 'warning' :
-                    hotel.status === 'rejected' ? 'error' : 'default'
-              }>
-                {hotel.status}
-              </Tag>
+              {(() => {
+                const renderStatus = {
+                  approved: '已通过',
+                  pending: '待审核',
+                  rejected: '已拒绝',
+                  offline: '已下线',
+                  default: '未知状态'
+                };
+                const displayText = renderStatus[hotel.status] || renderStatus.default;
+                return (
+                  <Tag color={
+                    hotel.status === 'approved' ? 'success' :
+                      hotel.status === 'pending' ? 'warning' :
+                        hotel.status === 'rejected' ? 'error' : 'default'
+                  }>
+                    {displayText}
+                  </Tag>
+                );
+              })()}
             </Descriptions.Item>
             <Descriptions.Item label="描述" span={2}>{hotel.description || '无'}</Descriptions.Item>
             {hotel.rejectionReason && (
@@ -119,7 +130,7 @@ export default function HotelDetailModal({ hotelId, open, onClose }: Props) {
                 {hotel.images.map(img => (
                   <div key={img.id} style={{ textAlign: 'center' }}>
                     <Image
-                      src={img.url.startsWith('http') ? img.url : `http://localhost:3000${img.url}`}
+                      src={img.url.startsWith('http') ? img.url : `http://localhost:3001${img.url}`}
                       alt={img.description || '酒店图片'}
                       width={120}
                       height={120}

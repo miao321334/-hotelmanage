@@ -7,7 +7,7 @@ import { DiscountType } from '@prisma/client';
 export class PromotionDto {
   @ApiProperty({ description: '促销名称' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: '促销描述', required: false })
   @IsOptional()
@@ -16,19 +16,19 @@ export class PromotionDto {
 
   @ApiProperty({ description: '折扣类型', enum: DiscountType })
   @IsEnum(DiscountType)
-  discountType: DiscountType;
+  discountType!: DiscountType;
 
   @ApiProperty({ description: '折扣值' })
   @IsNumber()
-  discountValue: number;
+  discountValue!: number;
 
   @ApiProperty({ description: '开始日期' })
   @IsDate()
   @Type(() => Date)
-  startDate: Date;
+  startDate!: Date;
 
   @ApiProperty({ description: '结束日期' })
   @IsDate()
   @Type(() => Date)
-  endDate: Date;
+  endDate!: Date;
 }

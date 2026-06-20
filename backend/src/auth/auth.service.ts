@@ -85,24 +85,6 @@ export class AuthService {
     };
   }
 
-  async validateUser(userId: string) {
-    // 查找用户
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    };
-  }
-
   private generateToken(userId: string, role: string) {
     // 生成JWT令牌
     return jwt.sign(

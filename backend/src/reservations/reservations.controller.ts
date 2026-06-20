@@ -1,44 +1,12 @@
-import { Controller, Post, Get, Put, Body, Param, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Put, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ReservationsService } from './reservations.service';
-import { CreateReservationDto } from './dto/create-reservation.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('预订')
 @Controller('api/reservations')
 export class ReservationsController {
   constructor(private reservationsService: ReservationsService) {}
-
-  @ApiOperation({
-    summary: '创建预订',
-    description: '创建新预订并返回预订信息',
-  })
-  @ApiBody({ type: CreateReservationDto, description: '预订信息' })
-  @ApiResponse({
-    status: 201,
-    description: '创建成功',
-    schema: {
-      example: {
-        id: 'uuid',
-        hotelId: 'uuid',
-        roomId: 'uuid',
-        checkInDate: '2023-01-01T00:00:00Z',
-        checkOutDate: '2023-01-02T00:00:00Z',
-        guestName: '张三',
-        guestPhone: '13800138000',
-        guestEmail: 'zhangsan@example.com',
-        status: 'confirmed',
-        totalPrice: 500,
-        createdAt: '2023-01-01T00:00:00Z',
-        updatedAt: '2023-01-01T00:00:00Z',
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: '请求参数错误' })
-  @Post()
-  async createReservation(@Body() createReservationDto: CreateReservationDto) {
-    return this.reservationsService.createReservation(createReservationDto);
-  }
 
   @ApiOperation({
     summary: '获取预订列表',
@@ -70,73 +38,6 @@ export class ReservationsController {
   @UseGuards(AuthGuard)
   async getReservations() {
     return this.reservationsService.getReservations();
-  }
-
-  @ApiOperation({
-    summary: '获取预订详情',
-    description: '根据预订ID获取预订详细信息',
-  })
-  @ApiBearerAuth()
-  @ApiParam({ name: 'id', description: '预订ID', example: 'uuid' })
-  @ApiResponse({
-    status: 200,
-    description: '获取成功',
-    schema: {
-      example: {
-        id: 'uuid',
-        hotelId: 'uuid',
-        roomId: 'uuid',
-        checkInDate: '2023-01-01T00:00:00Z',
-        checkOutDate: '2023-01-02T00:00:00Z',
-        guestName: '张三',
-        guestPhone: '13800138000',
-        guestEmail: 'zhangsan@example.com',
-        status: 'confirmed',
-        totalPrice: 500,
-        createdAt: '2023-01-01T00:00:00Z',
-        updatedAt: '2023-01-01T00:00:00Z',
-      },
-    },
-  })
-  @ApiResponse({ status: 401, description: '未授权' })
-  @ApiResponse({ status: 404, description: '预订不存在' })
-  @Get(':id')
-  @UseGuards(AuthGuard)
-  async getReservationById(@Param('id') reservationId: string) {
-    return this.reservationsService.getReservationById(reservationId);
-  }
-
-  @ApiOperation({
-    summary: '获取酒店的预订列表',
-    description: '根据酒店ID获取该酒店的预订列表',
-  })
-  @ApiBearerAuth()
-  @ApiParam({ name: 'hotelId', description: '酒店ID', example: 'uuid' })
-  @ApiResponse({
-    status: 200,
-    description: '获取成功',
-    schema: {
-      type: 'array',
-      example: [
-        {
-          id: 'uuid',
-          roomId: 'uuid',
-          checkInDate: '2023-01-01T00:00:00Z',
-          checkOutDate: '2023-01-02T00:00:00Z',
-          guestName: '张三',
-          status: 'confirmed',
-          totalPrice: 500,
-          createdAt: '2023-01-01T00:00:00Z',
-        },
-      ],
-    },
-  })
-  @ApiResponse({ status: 401, description: '未授权' })
-  @ApiResponse({ status: 404, description: '酒店不存在' })
-  @Get('hotel/:hotelId')
-  @UseGuards(AuthGuard)
-  async getReservationsByHotel(@Param('hotelId') hotelId: string) {
-    return this.reservationsService.getReservationsByHotel(hotelId);
   }
 
   @ApiOperation({

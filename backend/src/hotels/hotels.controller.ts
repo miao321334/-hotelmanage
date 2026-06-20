@@ -1,9 +1,8 @@
 import { UseInterceptors, UploadedFile, Controller, Post, Get, Put, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { HotelsService } from './hotels.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
-import { QueryHotelsDto } from './dto/query-hotels.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -167,47 +166,6 @@ export class HotelsController {
   @UseGuards(AuthGuard)
   async deleteHotel(@Param('id') hotelId: string, @Request() req) {
     return this.hotelsService.deleteHotel(hotelId, req.user.id);
-  }
-
-  @ApiOperation({
-    summary: '查询酒店列表',
-    description: '根据查询参数获取酒店列表，支持标签、价格、星级等筛选',
-  })
-  @ApiQuery({ name: 'tagIds', description: '标签ID数组', required: false, type: [String] })
-  @ApiQuery({ name: 'minPrice', description: '最低价格', required: false, type: Number })
-  @ApiQuery({ name: 'maxPrice', description: '最高价格', required: false, type: Number })
-  @ApiQuery({ name: 'minStarRating', description: '最低星级', required: false, type: Number, minimum: 1, maximum: 5 })
-  @ApiQuery({ name: 'maxStarRating', description: '最高星级', required: false, type: Number, minimum: 1, maximum: 5 })
-  @ApiQuery({ name: 'location', description: '位置', required: false, type: String })
-  @ApiQuery({ name: 'keyword', description: '关键词', required: false, type: String })
-  @ApiQuery({ name: 'page', description: '页码', required: false, type: Number, minimum: 1 })
-  @ApiQuery({ name: 'limit', description: '每页数量', required: false, type: Number, minimum: 1, maximum: 100 })
-  @ApiResponse({
-    status: 200,
-    description: '查询成功',
-    schema: {
-      example: {
-        data: [
-          {
-            id: 'uuid',
-            nameZh: '易宿酒店',
-            nameEn: 'Easy Stay Hotel',
-            address: '北京市朝阳区',
-            starRating: 4,
-            status: 'approved',
-            createdAt: '2023-01-01T00:00:00Z',
-          },
-        ],
-        total: 1,
-        page: 1,
-        limit: 10,
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: '请求参数错误' })
-  @Get()
-  async queryHotels(@Query() query: QueryHotelsDto) {
-    return this.hotelsService.getHotels(query);
   }
 
   // 追加

@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder, SwaggerDocumentOptions, } from '@nestjs
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
+import * as express from 'express';
 
 const options: SwaggerDocumentOptions = {
   operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
@@ -15,6 +16,8 @@ async function bootstrap() {
 
   app.enableCors();
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });
+  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+
 
   const config = new DocumentBuilder()
     .setTitle('易宿酒店预订平台后端API')

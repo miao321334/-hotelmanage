@@ -36,7 +36,7 @@ export default function HotelForm({
   const [form] = Form.useForm();
   const [newFiles, setNewFiles] = useState<any[]>([]);
   const [imageDescriptions, setImageDescriptions] = useState<{ [key: string]: string }>({});
-  const [mainImageIndex, setMainImageIndex] = useState<number>(-1);
+  const [mainImageIndex, setMainImageIndex] = useState<number>(-1); // -1 表示没有主图
   const [tagOptions, setTagOptions] = useState<any[]>([]);
   const [tagLoading, setTagLoading] = useState(false);
 
@@ -71,26 +71,52 @@ export default function HotelForm({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const newFilesData = files.map(file => ({
-      uid: Date.now() + Math.random().toString(),
+      uid: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: file.name,
       originFileObj: file,
       url: URL.createObjectURL(file),
+      status: 'ready',
     }));
     setNewFiles(prev => [...prev, ...newFilesData]);
     e.target.value = '';
   };
 
-  // 删除新图片（未上传）
+  // 删除待上传新图片
   const handleRemoveNew = (uid: string) => {
-    setNewFiles(prev => prev.filter(f => f.uid !== uid));
+    setNewFiles(prev => {
+      const file = prev.find(f => f.uid === uid);
+      if (file?.url) URL.revokeObjectURL(file.url); // 释放内存
+      return prev.filter(f => f.uid !== uid);
+    });
     setImageDescriptions(prev => {
       const newDesc = { ...prev };
       delete newDesc[uid];
       return newDesc;
     });
-    if (mainImageIndex !== -1 && newFiles[mainImageIndex]?.uid === uid) {
+    // 如果删除的是主图，重置主图索引
+    const deleteIndex = newFiles.findIndex(f => f.uid === uid);
+    if (mainImageIndex === deleteIndex) {
       setMainImageIndex(-1);
+    } else if (mainImageIndex > deleteIndex) {
+      setMainImageIndex(mainImageIndex - 1);
     }
+  };
+
+  // 设置已有图片为主图
+  const handleSetExistingMain = async (imageId: string, currentIsMain: boolean) => {
+    if (currentIsMain) return; // 已经是主图，无需操作
+
+    try {
+      await onUpdateImage?.(imageId, { isMain: true });
+      message.success('主图设置成功');
+    } catch (error) {
+      message.error('设置主图失败');
+    }
+  };
+
+  // 设置新图片为主图（仅本地状态，提交时生效）
+  const handleSetNewMain = (index: number) => {
+    setMainImageIndex(index);
   };
 
   // 提交前验证并调用父组件 onSubmit
@@ -290,89 +316,153 @@ export default function HotelForm({
       </Form.Item>
 
       {/* 图片区域 */}
-      <Form.Item label="酒店图片">
-        {/* 已有图片展示 */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: 16 }}>
-          {existingImages.map((img) => (
-            <div key={img.id} style={{ marginRight: 16, marginBottom: 16, border: '1px solid #d9d9d9', padding: 8, borderRadius: 4, width: 150 }}>
-              <img src={getImageUrl(img.url)} alt={img.description || ''} style={{ width: '100%', height: 100, objectFit: 'cover' }} />
-              <div style={{ marginTop: 8 }}>
-                <Radio.Group
-                  value={img.isMain}
-                  onChange={(e) => onUpdateImage?.(img.id, { isMain: e.target.value })}
-                >
-                  <Radio value={true}>主图</Radio>
-                </Radio.Group>
-              </div>
-              <div style={{ marginTop: 8 }}>
-                <Input.TextArea
-                  placeholder="图片描述"
-                  rows={2}
-                  value={img.description || ''}
-                  onChange={(e) => onUpdateImage?.(img.id, { description: e.target.value })}
-                />
-              </div>
-              <Button size="small" danger onClick={() => onDeleteImage?.(img.id)} style={{ marginTop: 8 }}>
-                删除
-              </Button>
-            </div>
-          ))}
-        </div>
+      <Form.Item label="酒店图片" required={false}>
+        <div style={{ marginBottom: 16 }}>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileChange}
+            style={{ display: 'block', marginBottom: 16 }}
+          />
 
-        {/* 新图片上传区域 */}
-        <input type="file" multiple accept="image/*" onChange={handleFileChange} />
-        <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 16 }}>
-          {newFiles.map((file, index) => (
-            <div key={file.uid} style={{ marginRight: 16, marginBottom: 16, border: '1px solid #d9d9d9', padding: 8, borderRadius: 4, width: 150 }}>
-              <img src={file.url} alt={file.name} style={{ width: '100%', height: 100, objectFit: 'cover' }} />
-              <div style={{ marginTop: 8 }}>
-                <Radio.Group
-                  value={mainImageIndex === index}
-                  onChange={(e) => {
-                    setMainImageIndex(e.target.value ? index : -1);
-                    if (e.target.value) {
-                      onUploadImage?.(file.originFileObj, imageDescriptions[file.uid] || '', true);
-                    }
-                  }}
-                >
-                  <Radio value={true}>主图</Radio>
-                </Radio.Group>
-              </div>
-              <div style={{ marginTop: 8 }}>
-                <Input.TextArea
-                  placeholder="图片描述"
-                  rows={2}
-                  value={imageDescriptions[file.uid] || ''}
-                  onChange={(e) => {
-                    setImageDescriptions(prev => ({ ...prev, [file.uid]: e.target.value }));
-                  }}
-                />
-              </div>
-              <Button size="small" danger onClick={() => handleRemoveNew(file.uid)} style={{ marginTop: 8 }}>
-                删除
-              </Button>
-            </div>
-          ))}
-        </div>
+          {/* 已有图片区域 */}
+          {existingImages.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <h4 style={{ marginBottom: 12, color: '#666' }}>已上传图片</h4>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                {existingImages.map((img) => (
+                  <div
+                    key={img.id}
+                    style={{
+                      border: '1px solid #d9d9d9',
+                      padding: 12,
+                      borderRadius: 8,
+                      width: 180,
+                      background: '#fafafa'
+                    }}
+                  >
+                    <img
+                      src={getImageUrl(img.url)}
+                      alt={img.description || ''}
+                      style={{
+                        width: '100%',
+                        height: 120,
+                        objectFit: 'cover',
+                        borderRadius: 4,
+                        marginBottom: 8
+                      }}
+                    />
 
-        {/* 上传新图片按钮 */}
-        {newFiles.length > 0 && (
-          <Button
-            type="primary"
-            onClick={() => {
-              newFiles.forEach((file, index) => {
-                const isMain = mainImageIndex === index;
-                onUploadImage?.(file.originFileObj, imageDescriptions[file.uid] || '', isMain);
-              });
-              setNewFiles([]);
-              setImageDescriptions({});
-              setMainImageIndex(-1);
-            }}
-            style={{ marginTop: 16 }}
-          >
-            上传所选图片
-          </Button>
-        )}
+                    {/* 主图选择 */}
+                    <div style={{ marginBottom: 8 }}>
+                      <Radio
+                        checked={img.isMain}
+                        onClick={() => handleSetExistingMain(img.id, img.isMain)}
+                      >
+                        主图
+                      </Radio>
+                    </div>
+
+                    {/* 图片描述 */}
+                    <Input.TextArea
+                      placeholder="图片描述"
+                      rows={2}
+                      value={img.description || ''}
+                      onChange={(e) => onUpdateImage?.(img.id, { description: e.target.value })}
+                      style={{ marginBottom: 8, fontSize: 12 }}
+                    />
+
+                    <Button
+                      size="small"
+                      danger
+                      block
+                      onClick={() => onDeleteImage?.(img.id)}
+                    >
+                      删除
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 待上传新图片区域 */}
+          {newFiles.length > 0 && (
+            <div>
+              <h4 style={{ marginBottom: 12, color: '#666' }}>待上传图片</h4>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                {newFiles.map((file, index) => (
+                  <div
+                    key={file.uid}
+                    style={{
+                      border: '2px dashed #1890ff',
+                      padding: 12,
+                      borderRadius: 8,
+                      width: 180,
+                      background: '#f0f5ff'
+                    }}
+                  >
+                    <img
+                      src={file.url}
+                      alt={file.name}
+                      style={{
+                        width: '100%',
+                        height: 120,
+                        objectFit: 'cover',
+                        borderRadius: 4,
+                        marginBottom: 8
+                      }}
+                    />
+
+                    {/* 主图选择 */}
+                    <div style={{ marginBottom: 8 }}>
+                      <Radio
+                        checked={mainImageIndex === index}
+                        onClick={() => handleSetNewMain(index)}
+                      >
+                        主图
+                      </Radio>
+                    </div>
+
+                    {/* 图片描述 */}
+                    <Input.TextArea
+                      placeholder="图片描述"
+                      rows={2}
+                      value={imageDescriptions[file.uid] || ''}
+                      onChange={(e) => {
+                        setImageDescriptions(prev => ({
+                          ...prev,
+                          [file.uid]: e.target.value
+                        }));
+                      }}
+                      style={{ marginBottom: 8, fontSize: 12 }}
+                    />
+
+                    <Button
+                      size="small"
+                      danger
+                      block
+                      onClick={() => handleRemoveNew(file.uid)}
+                    >
+                      移除
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 12, color: '#999', fontSize: 12 }}>
+                提示：点击"提交酒店信息"后，新图片将随表单一起上传
+              </div>
+            </div>
+          )}
+
+          {existingImages.length === 0 && newFiles.length === 0 && (
+            <div style={{ color: '#999', padding: '20px 0' }}>
+              暂无图片，请选择文件上传
+            </div>
+          )}
+        </div>
       </Form.Item>
 
       {/* 房型列表 */}

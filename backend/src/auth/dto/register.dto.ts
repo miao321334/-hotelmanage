@@ -10,7 +10,7 @@ export class RegisterDto {
   })
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @ApiProperty({
     description: '用户密码',
@@ -20,7 +20,7 @@ export class RegisterDto {
   })
   @IsString()
   @IsNotEmpty()
-  password: string;
+  password!: string;
 
   @ApiProperty({
     description: '用户名',
@@ -29,7 +29,7 @@ export class RegisterDto {
   })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiProperty({
     description: '用户角色',
@@ -39,5 +39,5 @@ export class RegisterDto {
   })
   @IsEnum(UserRole)
   @IsNotEmpty()
-  role: UserRole;
+  role!: UserRole;
 }

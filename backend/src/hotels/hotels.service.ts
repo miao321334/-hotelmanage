@@ -7,7 +7,7 @@ import { CreateFacilityDto } from './dto/create-facility.dto';
 import { CreateNearbyAttractionDto } from './dto/create-nearby-attraction.dto';
 @Injectable()
 export class HotelsService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
 
   async createHotel(createHotelDto: CreateHotelDto, merchantId: string) {
     // 创建酒店，状态默认为pending
@@ -18,7 +18,7 @@ export class HotelsService {
       capacity: room.capacity,
       quantity: room.quantity,
       description: room.description,
-    }));
+    })) || [];
 
     const promotionsData = promotions?.map(promo => ({
       name: promo.name,
@@ -27,7 +27,7 @@ export class HotelsService {
       discountValue: new Prisma.Decimal(promo.discountValue),
       startDate: new Date(promo.startDate),
       endDate: new Date(promo.endDate),
-    }));
+    })) || [];
 
     const openingDate = new Date(createHotelDto.openingDate);
 
@@ -35,22 +35,22 @@ export class HotelsService {
       name: attr.name,
       type: attr.type,
       distance: attr.distance,
-    }));
+    })) || [];
 
     const facilitiesData = facilities?.map(facility => ({
       name: facility.name,
       description: facility.description,
-    }));
+    })) || [];
 
     // 处理地理位置数据
-    let locationData = undefined;
+    /*let locationData = undefined;
     if (location) {
       // 使用PostGIS的ST_MakePoint函数创建点
       locationData = {
         type: 'Point',
         coordinates: [location.longitude, location.latitude]
       };
-    }
+    }*/
 
     return this.prisma.hotel.create({
       data: {
@@ -62,7 +62,7 @@ export class HotelsService {
         description: createHotelDto.description,
         status: HotelStatus.pending,
         merchantId,
-        location: locationData,
+        //location: locationData,
         promotions: promotionsData ? { create: promotionsData } : undefined,
         rooms: roomsData ? { create: roomsData } : undefined,
         nearbyAttractions: nearbyAttractionsData ? { create: nearbyAttractionsData } : undefined,
@@ -104,7 +104,7 @@ export class HotelsService {
     });
 
     // 为每个酒店添加经纬度信息
-    for (const hotel of hotels) {
+    /*for (const hotel of hotels) {
       const locationData = await this.prisma.$queryRaw`
         SELECT ST_Y(location) as latitude, ST_X(location) as longitude
         FROM hotels
@@ -115,7 +115,7 @@ export class HotelsService {
         hotel.latitude = locationData[0].latitude;
         hotel.longitude = locationData[0].longitude;
       }
-    }
+    }*/
 
     return hotels;
   }
@@ -143,7 +143,7 @@ export class HotelsService {
     }
 
     // 获取经纬度信息
-    const locationData = await this.prisma.$queryRaw`
+    /*const locationData = await this.prisma.$queryRaw`
       SELECT ST_Y(location) as latitude, ST_X(location) as longitude
       FROM hotels
       WHERE id = ${hotelId}
@@ -152,7 +152,7 @@ export class HotelsService {
     if (locationData && locationData[0]) {
       hotel.latitude = locationData[0].latitude;
       hotel.longitude = locationData[0].longitude;
-    }
+    }*/
 
     return hotel;
   }
@@ -203,14 +203,14 @@ export class HotelsService {
     }));
 
     // 处理地理位置数据
-    let locationData = undefined;
+    /*let locationData = undefined;
     if (location) {
       // 使用PostGIS的ST_MakePoint函数创建点
       locationData = {
         type: 'Point',
         coordinates: [location.longitude, location.latitude]
       };
-    }
+    }*/
 
     // 更新酒店信息
     return this.prisma.$transaction(async (tx) => {
@@ -233,7 +233,7 @@ export class HotelsService {
           openingDate,
           description: updateHotelDto.description,
           status: HotelStatus.pending,
-          location: locationData,
+          //location: locationData,
           promotions: promotionsData ? { create: promotionsData } : undefined,
           rooms: roomsData ? { create: roomsData } : undefined,
           nearbyAttractions: nearbyAttractionsData ? { create: nearbyAttractionsData } : undefined,
@@ -408,7 +408,7 @@ export class HotelsService {
     });
 
     // 为每个酒店添加经纬度信息
-    for (const hotel of hotels) {
+    /*for (const hotel of hotels) {
       const locationData = await this.prisma.$queryRaw`
         SELECT ST_Y(location) as latitude, ST_X(location) as longitude
         FROM hotels
@@ -419,7 +419,7 @@ export class HotelsService {
         hotel.latitude = locationData[0].latitude;
         hotel.longitude = locationData[0].longitude;
       }
-    }
+    }*/
 
     const total = await this.prisma.hotel.count({ where });
 
@@ -428,146 +428,6 @@ export class HotelsService {
       total,
       page,
       limit,
-    };
-  }
-
-  async getHotels(query: any): Promise<any> {
-    // 构建查询条件
-    const where: any = {
-      status: HotelStatus.approved,
-    };
-
-    // 按标签筛选
-    if (query.tagIds && query.tagIds.length > 0) {
-      where.tags = {
-        some: {
-          tagId: {
-            in: query.tagIds,
-          },
-        },
-      };
-    }
-
-    // 按星级范围筛选
-    if (query.minStarRating) {
-      where.starRating = {
-        ...where.starRating,
-        gte: query.minStarRating,
-      };
-    }
-
-    if (query.maxStarRating) {
-      where.starRating = {
-        ...where.starRating,
-        lte: query.maxStarRating,
-      };
-    }
-
-    // 按位置筛选
-    if (query.location) {
-      where.address = {
-        contains: query.location,
-      };
-    }
-
-    // 按关键词筛选
-    if (query.keyword) {
-      where.OR = [
-        {
-          nameZh: {
-            contains: query.keyword,
-          },
-        },
-        {
-          nameEn: {
-            contains: query.keyword,
-          },
-        },
-        {
-          description: {
-            contains: query.keyword,
-          },
-        },
-      ];
-    }
-
-    // 分页参数
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
-
-    // 查询酒店列表
-    const hotels = await this.prisma.hotel.findMany({
-      where,
-      include: {
-        rooms: {
-          select: {
-            price: true,
-          },
-        },
-        images: true,
-        facilities: true,
-        promotions: true,
-        nearbyAttractions: true,
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
-      },
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    // 计算总数
-    const total = await this.prisma.hotel.count({ where });
-
-    // 处理价格范围筛选（需要在应用层处理，因为价格存储在房型中）
-    const filteredHotels = hotels.filter(hotel => {
-      if (!hotel.rooms || hotel.rooms.length === 0) {
-        return false;
-      }
-
-      // 获取酒店最低价格
-      const minRoomPrice = Math.min(...hotel.rooms.map(room => room.price.toNumber()));
-
-      // 检查价格范围
-      if (query.minPrice && minRoomPrice < query.minPrice) {
-        return false;
-      }
-
-      if (query.maxPrice && minRoomPrice > query.maxPrice) {
-        return false;
-      }
-
-      return true;
-    });
-
-    // 为每个酒店添加经纬度信息
-    for (const hotel of filteredHotels) {
-      const locationData = await this.prisma.$queryRaw`
-        SELECT ST_Y(location) as latitude, ST_X(location) as longitude
-        FROM hotels
-        WHERE id = ${hotel.id}
-      `;
-
-      if (locationData && locationData[0]) {
-        hotel.latitude = locationData[0].latitude;
-        hotel.longitude = locationData[0].longitude;
-      }
-    }
-
-    return {
-      hotels: filteredHotels,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
     };
   }
 

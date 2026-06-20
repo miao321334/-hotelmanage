@@ -47,25 +47,33 @@ export default function EditHotel() {
     };
   };
 
-  // 图片操作回调
+  // 更新已有图片信息
   const handleUpdateImage = async (imageId: string, data: { description?: string; isMain?: boolean }) => {
     try {
       await updateHotelImage(id as string, imageId, data);
+
+      // 乐观更新本地状态，避免重新请求
       setHotel(prev => {
         if (!prev) return prev;
         return {
           ...prev,
           images: (prev.images || []).map(img =>
-            img.id === imageId ? { ...img, ...data } : img
+            img.id === imageId
+              ? { ...img, ...data }
+              : data.isMain
+                ? { ...img, isMain: false } // 如果设置主图，其他图取消主图
+                : img
           ),
         };
       });
+
       message.success('图片更新成功');
     } catch (error) {
       message.error('图片更新失败');
     }
   };
 
+  // 删除已有图片
   const handleDeleteImage = async (imageId: string) => {
     try {
       await deleteHotelImage(id as string, imageId);
@@ -82,35 +90,16 @@ export default function EditHotel() {
     }
   };
 
-  const handleUploadImage = async (file: File, description: string, isMain: boolean) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('description', description);
-    formData.append('isMain', String(isMain));
-    try {
-      const newImage = await uploadHotelImage(id as string, formData);
-      setHotel(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          images: [...(prev.images || []), newImage],
-        };
-      });
-      message.success('图片上传成功');
-    } catch (error) {
-      message.error('图片上传失败');
-    }
-  };
-
-  // 提交酒店基本信息
+  // 提交表单时处理新图片上传
   const onSubmit = async (
     data: CreateHotelDto,
-    fileList?: any[],
-    imageDescriptions?: { [key: string]: string },
-    mainImageIndex?: number
+    fileList: any[],
+    imageDescriptions: { [key: string]: string },
+    mainImageIndex: number
   ) => {
     setLoading(true);
     try {
+      // 更新酒店基础信息
       const payload = {
         ...data,
         openingDate: (data.openingDate as any).toISOString(),
@@ -130,8 +119,29 @@ export default function EditHotel() {
         facilities: data.facilities,
         tagIds: data.tagIds,
       };
+
       await updateHotel(id as string, payload);
-      message.success('酒店更新成功');
+
+      // 上传新图片
+      if (fileList.length > 0) {
+        const uploadPromises = fileList.map((file, index) => {
+          const formData = new FormData();
+          formData.append('file', file.originFileObj);
+          formData.append('description', imageDescriptions[file.uid] || '');
+          formData.append('isMain', String(mainImageIndex === index));
+          return uploadHotelImage(id as string, formData);
+        });
+
+        await Promise.all(uploadPromises);
+
+        await loadHotel();
+
+        message.success(`酒店更新成功，已上传 ${fileList.length} 张图片`);
+      } else {
+        message.success('酒店更新成功');
+        await loadHotel();
+      }
+
       router.push('/merchant/hotels');
     } catch (error: any) {
       message.error(error.response?.data?.message || '更新失败');
@@ -154,7 +164,6 @@ export default function EditHotel() {
             existingImages={hotel.images || []}
             onUpdateImage={handleUpdateImage}
             onDeleteImage={handleDeleteImage}
-            onUploadImage={handleUploadImage}
           />
         </div>
       </Layout>

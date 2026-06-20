@@ -40,15 +40,20 @@ export default function NewHotel() {
         tagIds: data.tagIds,
       };
       const hotel = await createHotel(data);
-      const uploadPromises = fileList.map((file, index) => {
-        const formData = new FormData();
-        formData.append('file', file.originFileObj);
-        formData.append('description', imageDescriptions[file.uid] || '');
-        formData.append('isMain', String(mainImageIndex === index));
-        return uploadHotelImage(hotel.id, formData);
-      });
-      await Promise.all(uploadPromises);
-      message.success('酒店创建成功');
+
+      if (fileList.length > 0) {
+        const uploadPromises = fileList.map((file, index) => {
+          const formData = new FormData();
+          formData.append('file', file.originFileObj);
+          formData.append('description', imageDescriptions[file.uid] || '');
+          formData.append('isMain', String(mainImageIndex === index));
+          return uploadHotelImage(hotel.id, formData);
+        });
+        await Promise.all(uploadPromises);
+        message.success(`酒店创建成功，已上传 ${fileList.length} 张图片`);
+      } else {
+        message.success('酒店创建成功');
+      }
       router.push('/merchant/hotels');
     } catch (error: any) {
       message.error(error.response?.data?.message || '创建失败');
