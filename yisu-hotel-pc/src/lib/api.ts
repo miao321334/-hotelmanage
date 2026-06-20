@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { getToken } from './auth';
-import { Reservation } from '../types';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
@@ -177,40 +176,3 @@ export const offlineHotel = (id: string) => api.post(`/api/admin/hotels/${id}/of
  * @returns 操作结果
  */
 export const onlineHotel = (id: string) => api.post(`/api/admin/hotels/${id}/online`);
-
-// 预订（预约）管理
-
-/**
- * 获取所有预订记录列表。
- *
- * @returns 预订列表
- */
-export const getReservations = () =>
-  api.get<Reservation[]>('/api/reservations').then(res => res.data);
-
-/**
- * 办理入住。
- *
- * @param id 预订 ID
- * @returns 更新后的预订数据
- */
-export const checkInReservation = (id: string) =>
-  api.put(`/api/reservations/${id}/check-in`).then(res => res.data);
-
-/**
- * 办理退房。
- *
- * @param id 预订 ID
- * @returns 更新后的预订数据
- */
-export const checkOutReservation = (id: string) =>
-  api.put(`/api/reservations/${id}/check-out`).then(res => res.data);
-
-/**
- * 取消预订。
- *
- * @param id 预订 ID
- * @returns 更新后的预订数据
- */
-export const cancelReservation = (id: string) =>
-  api.put(`/api/reservations/${id}/cancel`).then(res => res.data);

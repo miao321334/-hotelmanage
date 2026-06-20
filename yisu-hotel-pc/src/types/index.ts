@@ -1,5 +1,4 @@
 export type UserRole = 'merchant' | 'admin';
-export type ReservationStatus = 'confirmed' | 'check_in' | 'check_out' | 'cancelled';
 
 export interface User {
   id: string;
@@ -118,28 +117,5 @@ export interface HotelImage {
   isMain: boolean;
   hotelId: string;
   createdAt: string;
-}
-
-export interface Guest {
-  id: string;
-  name: string;
-  phone: string;
-}
-
-export interface Reservation {
-  id: string;
-  hotelId: string;
-  roomId: string;
-  checkInDate: string;
-  checkOutDate: string;
-  guestName: string;
-  guestPhone: string;
-  guestEmail: string;
-  status: ReservationStatus;
-  totalPrice: number;
-  createdAt: string;
-  hotel?: Hotel;
-  room?: Room;
-  guests?: Guest[];
 }
 

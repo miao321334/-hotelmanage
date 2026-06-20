@@ -42,11 +42,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         icon: <PlusOutlined />,
         label: <Link href="/merchant/hotels/new">新增酒店</Link>,
       },
-      {
-        key: '/merchant/reservations',
-        icon: <UnorderedListOutlined />,
-        label: <Link href="/merchant/reservations">预约管理</Link>,
-      },
     );
   }
 
